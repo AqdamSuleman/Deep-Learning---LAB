@@ -1,1 +1,101 @@
+# Step 1: Import Libraries
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
 
+# Import Keras Tools
+# These help:
+# load images
+# build CNN models
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
+
+# Step 3: Define Image Size and Batch Size
+img_size = 224     #images resized to 224×224
+batch_size = 32    #32 images processed at once
+  
+# Data preprocessing
+train_datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2
+)
+
+!unzip archive\ \(20\).zip
+
+# Step 5: Load Training Data
+train_generator = train_datagen.flow_from_directory(
+    "brain_tumor_dataset",
+    target_size=(224,224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+
+# Step 6: Load Validation Data
+val_generator = train_datagen.flow_from_directory(
+    "brain_tumor_dataset",
+    target_size=(224,224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)
+
+print(train_generator.class_indices)
+
+!rm -r no
+!rm -r yes
+
+# Step 7: Build CNN Model
+model = models.Sequential()
+
+# First Convolution Layer
+model.add(layers.Conv2D(32,(3,3),activation='relu',input_shape=(224,224,3)))
+model.add(layers.MaxPooling2D(2,2))
+
+# Second Layer
+model.add(layers.Conv2D(64,(3,3),activation='relu'))
+model.add(layers.MaxPooling2D(2,2))
+
+# Third Layer
+model.add(layers.Conv2D(128,(3,3),activation='relu'))
+model.add(layers.MaxPooling2D(2,2))
+
+
+# Flatten Layer
+model.add(layers.Flatten())
+
+# Dense Layer
+model.add(layers.Dense(128,activation='relu'))
+
+model.add(layers.Dense(2,activation='softmax'))
+
+
+# Step 8: Compile the Model
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+
+# Step 9: Train the Model
+history = model.fit(
+    train_generator,
+    epochs=10,
+    validation_data=val_generator
+)
+
+
+# Step 10: Evaluate Model
+loss, accuracy = model.evaluate(val_generator)
+print("Validation Accuracy:", accuracy)
+
+
+# Step 11: Plot Accuracy Graph
+plt.plot(history.history['accuracy'], label='train accuracy')
+plt.plot(history.history['val_accuracy'], label='validation accuracy')
+
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
